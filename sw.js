@@ -1,4 +1,4 @@
-const CACHE="at-training-v6";
+const CACHE="at-training-v7";
 const ASSETS=["./manifest.webmanifest","./icon-192.svg","./icon-512.svg"];
 
 self.addEventListener("install",e=>{
