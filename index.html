@@ -135,6 +135,7 @@ stepup:{group:"Strength",name:"Low Step-Up",dose:["Starts Week 2","2 × 6 / leg"
 deadbug:{group:"Core + Back",name:"Dead Bug",dose:["2 × 5 / side","2 × 5 / side","2 × 6–8 / side","2 × 6–8 / side"],setup:"Lie on back with hips and knees around 90°; arms up.",move:"Lower opposite arm and leg only as far as trunk stays controlled.",cues:"Do not let the low back arch away from the floor.",video:"https://www.youtube.com/watch?v=GbSC02oU3To"},
 sideplank:{group:"Core + Back",name:"Side Plank from Knees",dose:["2 × 10–15 sec / side","2 × 15–20 sec / side","2 × 20–25 sec / side","2 × 20–25 sec / side"],setup:"Lie on side with knees bent; elbow under shoulder.",move:"Lift hips so shoulder, hip, and knee form a straight line.",cues:"Shorten the hold if lateral-hip pain increases.",video:"https://www.youtube.com/watch?v=igs_hXbcNHE"},
 trailwalk:{group:"Trail",name:"Trail Walk",dose:["3 laps • 0.6 mi","4–5 laps • 0.8–1.0 mi","5–6 laps • 1.0–1.2 mi","6–8 laps • 1.2–1.6 mi"],setup:"Wear the Merrell Moab 3 non-waterproof. No backpack during Weeks 1–4.",move:"Walk at talk-test pace. Keep the first lap deliberately easy.",cues:"On descents use short controlled steps, soft knees, and no rushing or hard braking.",video:null},
+restday:{group:"Recovery Choice",name:"Rest Day",dose:["Intentional recovery","Intentional recovery","Intentional recovery","Intentional recovery"],setup:"Choose this when the plan allows rest and you intentionally take the recovery option.",move:"No workout is required. Normal easy daily activity is fine; optional gentle mobility is okay if it feels good.",cues:"A planned rest day counts as following the program. Check this item so the day is recorded as intentionally completed.",video:null},
 calfstretch:{group:"Mobility",name:"Calf Stretch",dose:["2 × 20–30 sec / side","2 × 20–30 sec / side","2 × 20–30 sec / side","2 × 20–30 sec / side"],setup:"Use a wall or stable support. Step one foot back with heel down.",move:"Keep back knee straight and gently shift forward.",cues:"Mild stretch only; do not force it.",video:null},
 soleus:{group:"Mobility",name:"Soleus / Ankle Stretch",dose:["2 × 20–30 sec / side","2 × 20–30 sec / side","2 × 20–30 sec / side","2 × 20–30 sec / side"],setup:"Same wall position as calf stretch.",move:"Bend the back knee slightly while keeping the heel down.",cues:"Keep the foot pointing forward.",video:null},
 hamstring:{group:"Mobility",name:"Hamstring Stretch",dose:["2 × 20–30 sec / side","2 × 20–30 sec / side","2 × 20–30 sec / side","2 × 20–30 sec / side"],setup:"Place heel on a low step with knee soft.",move:"Hinge forward from the hips until a mild stretch is felt.",cues:"Do not round aggressively through the low back.",video:null},
@@ -150,10 +151,10 @@ const sessions = {
 monday:{title:"Monday — Trail",note:"Complete today's trail walk. Mobility afterward is optional unless symptoms or stiffness suggest you need it.",items:trailOnly},
 tuesday:{title:"Tuesday — Ankle + Hip + Balance + Strength + Core",note:"Complete each listed exercise for today's prescribed sets/reps, then check it. Shared exercises such as Sit-to-Stand and Bird Dog appear only once.",items:baseStrength},
 wednesday:{title:"Wednesday — Trail",note:"Complete today's trail walk at talk-test pace. Finish with reserve.",items:trailOnly},
-thursday:{title:"Thursday — Rest / Mobility",note:"This is a recovery day. Complete the mobility items you use today and check them individually.",items:mobility},
+thursday:{title:"Thursday — Rest / Mobility",note:"Choose Rest Day to record a full recovery day. Mobility is optional; if you do any of it, check those items too.",items:["restday",...mobility]},
 friday:{title:"Friday — Trail + Ankle + Hip + Balance",note:"The trail walk and each ankle/hip/balance exercise are separate items for this Friday session.",items:fridayWork},
 saturday:{title:"Saturday — Strength + Hip + Ankle + Balance + Core",note:"Complete each listed exercise for today's prescribed sets/reps, then check it. Duplicate exercises are intentionally shown only once.",items:baseStrength},
-sunday:{title:"Sunday — Trail or Rest",note:"If you choose the trail option, complete and check the Trail Walk. If you choose rest, leave it unchecked; this day is intentionally flexible.",items:trailOnly}
+sunday:{title:"Sunday — Trail or Rest",note:"Choose one: complete the Trail Walk or check Rest Day. These are alternate options for Sunday, not two things you need to complete.",items:["trailwalk","restday"]}
 };
 
 const trailTargets={1:"4 walks • 3 laps each • 0.6 mile per walk",2:"4 walks • 4–5 laps each • 0.8–1.0 mile per walk",3:"4 walks • 5–6 laps each • 1.0–1.2 miles per walk",4:"4 walks • 6–8 laps each • 1.2–1.6 miles per walk"};
@@ -195,9 +196,21 @@ function renderSession(){
 function bindChecks(){
   document.querySelectorAll("#sessionList .check").forEach(b=>{
     b.onchange=()=>{
-      const a=b.closest(".exercise"),k=stateKey(a.dataset.id);
+      const a=b.closest(".exercise"),id=a.dataset.id,k=stateKey(id);
       if(b.checked)localStorage.setItem(k,"1");else localStorage.removeItem(k);
       a.classList.toggle("done",b.checked);
+
+      // Sunday is Trail OR Rest. Selecting one clears the other.
+      if(day==="sunday" && b.checked && (id==="trailwalk" || id==="restday")){
+        const other=id==="trailwalk"?"restday":"trailwalk";
+        localStorage.removeItem(stateKey(other));
+        const otherCard=document.querySelector('.exercise[data-id="'+other+'"]');
+        if(otherCard){
+          const otherBox=otherCard.querySelector(".check");
+          otherBox.checked=false;
+          otherCard.classList.remove("done");
+        }
+      }
       updateProgress();
     };
   });
@@ -205,6 +218,20 @@ function bindChecks(){
 function updateProgress(){
   const boxes=[...document.querySelectorAll("#sessionList .check:not(:disabled)")];
   const done=boxes.filter(b=>b.checked).length;
+  const restSelected=localStorage.getItem(stateKey("restday"))==="1";
+  const trailSelected=localStorage.getItem(stateKey("trailwalk"))==="1";
+
+  if(day==="sunday"){
+    if(restSelected) document.getElementById("progress").textContent="Rest day selected • Sunday complete";
+    else if(trailSelected) document.getElementById("progress").textContent="Trail option completed • Sunday complete";
+    else document.getElementById("progress").textContent="Choose Trail Walk or Rest Day";
+    return;
+  }
+  if(day==="thursday" && restSelected){
+    const optionalDone=boxes.filter(b=>b.checked && b.closest(".exercise").dataset.id!=="restday").length;
+    document.getElementById("progress").textContent="Rest day selected • Optional mobility: "+optionalDone+" of 5 completed";
+    return;
+  }
   document.getElementById("progress").textContent=done+" of "+boxes.length+" session items completed";
 }
 weekSel.onchange=()=>{week=weekSel.value;localStorage.setItem("at-week",week);renderSession()}
@@ -220,6 +247,23 @@ document.getElementById("reset").onclick=()=>{
   renderSession();
 };
 document.getElementById("complete").onclick=()=>{
+  if(day==="sunday"){
+    const restSelected=localStorage.getItem(stateKey("restday"))==="1";
+    const trailSelected=localStorage.getItem(stateKey("trailwalk"))==="1";
+    if(!restSelected && !trailSelected){
+      alert("Choose either Trail Walk or Rest Day, then check that option.");
+    }
+    updateProgress();
+    return;
+  }
+  if(day==="thursday"){
+    // Completing a recovery day records Rest Day; mobility remains optional.
+    localStorage.setItem(stateKey("restday"),"1");
+    const restCard=document.querySelector('.exercise[data-id="restday"]');
+    if(restCard){restCard.querySelector(".check").checked=true;restCard.classList.add("done");}
+    updateProgress();
+    return;
+  }
   document.querySelectorAll("#sessionList .check:not(:disabled)").forEach(b=>{
     b.checked=true;const a=b.closest(".exercise");localStorage.setItem(stateKey(a.dataset.id),"1");a.classList.add("done");
   });
