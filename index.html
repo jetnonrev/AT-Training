@@ -43,7 +43,7 @@ details{border-top:1px solid #edf0f2}summary{cursor:pointer;padding:11px 13px;fo
 </style>
 </head>
 <body>
-<header><h1>AT Training</h1><p>Weeks 1–4 Foundation • Moab 3 non-waterproof • No pack • Sync v1.2</p></header>
+<header><h1>AT Training</h1><p>Weeks 1–4 Foundation • Moab 3 non-waterproof • No pack • Sync v1.3</p></header>
 <main class="wrap">
 
 <div class="topgrid">
@@ -160,6 +160,12 @@ sunday:{title:"Sunday — Trail or Rest",note:"Choose one: complete the Trail Wa
 const trailTargets={1:"4 walks • 3 laps each • 0.6 mile per walk",2:"4 walks • 4–5 laps each • 0.8–1.0 mile per walk",3:"4 walks • 5–6 laps each • 1.0–1.2 miles per walk",4:"4 walks • 6–8 laps each • 1.2–1.6 miles per walk"};
 
 const CLOUD_URL="https://script.google.com/macros/s/AKfycbxgPXj59Pn_8BWbGyxTX8EL_z4bDMauBgx3OOYCh7pSTI8mdfiBGizl4CLnbGAT6T-A/exec";
+const SAFE_WEEKS=new Set(["1","2","3","4"]);
+const SAFE_DAYS=new Set(["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]);
+const SAFE_ITEMS=new Set(Object.keys(X));
+function validCloudFields(w,d,i){
+  return SAFE_WEEKS.has(String(w)) && SAFE_DAYS.has(String(d)) && SAFE_ITEMS.has(String(i));
+}
 let cloudLoaded=false;
 let cloudStatus="Connecting to Google Sheets…";
 
@@ -179,6 +185,10 @@ function setCloudStatus(msg){
 }
 
 function saveCloud(id,completed){
+  if(!validCloudFields(week,day,id)){
+    setCloudStatus("Cloud save blocked • invalid local data");
+    return;
+  }
   setCloudStatus("Saving to Google Sheets…");
   const cb="atCloudSave_"+Date.now()+"_"+Math.floor(Math.random()*100000);
   const script=document.createElement("script");
@@ -208,7 +218,6 @@ function saveCloud(id,completed){
   const params=new URLSearchParams({
     action:"save",
     callback:cb,
-    key:stateKey(id),
     week:week,
     day:day,
     item:id,
@@ -247,7 +256,8 @@ function loadCloud(){
         const cb2="atCloudSeed_"+Date.now()+"_"+Math.floor(Math.random()*100000);
         const s2=document.createElement("script");
         window[cb2]=()=>{delete window[cb2];s2.remove();};
-        const params=new URLSearchParams({action:"save",callback:cb2,key:k,week:m[1],day:m[2],item:m[3],completed:"true",t:String(Date.now())});
+        if(!validCloudFields(m[1],m[2],m[3])) return;
+        const params=new URLSearchParams({action:"save",callback:cb2,week:m[1],day:m[2],item:m[3],completed:"true",t:String(Date.now())});
         s2.src=CLOUD_URL+"?"+params.toString();
         document.head.appendChild(s2);
       });
