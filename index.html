@@ -37,13 +37,13 @@ details{border-top:1px solid #edf0f2}summary{cursor:pointer;padding:11px 13px;fo
 .video{display:block;background:var(--blue);color:#fff;text-decoration:none;text-align:center;padding:12px;border-radius:10px;font-weight:900;margin-top:10px}
 .callout{font-size:13px;line-height:1.45;background:var(--cream)}.danger{background:#f7ecec}.mini{font-size:13px;line-height:1.4}.mini h3{margin:0 0 5px;color:var(--navy)}
 .bottom{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid var(--border);padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:8px;z-index:20}
-.bottom button{border:0;border-radius:10px;padding:11px;font-weight:900}.reset{background:#e9edef;color:var(--navy)}.complete{background:var(--green);color:#fff}
+.bottom button{border:0;border-radius:10px;padding:11px;font-weight:900}.reset{background:#e9edef;color:var(--navy)}.complete{background:var(--green);color:#fff;transition:opacity .2s ease,filter .2s ease}.complete:disabled{background:#c9d2d6;color:#6f7a80;opacity:.75;cursor:not-allowed;filter:saturate(.35)}.complete:not(:disabled){cursor:pointer}
 .empty{padding:18px;background:white;border:1px solid var(--border);border-radius:14px;color:var(--muted);line-height:1.45}
 @media(max-width:520px){.topgrid{grid-template-columns:1fr}.tabs{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
-<header><h1>AT Training</h1><p>Weeks 1–4 Foundation • Moab 3 non-waterproof • No pack • Sync v1.1</p></header>
+<header><h1>AT Training</h1><p>Weeks 1–4 Foundation • Moab 3 non-waterproof • No pack • Sync v1.2</p></header>
 <main class="wrap">
 
 <div class="topgrid">
@@ -321,6 +321,27 @@ function bindChecks(){
     };
   });
 }
+function updateCompleteButton(){
+  const btn=document.getElementById("complete");
+  const boxes=[...document.querySelectorAll("#sessionList .check:not(:disabled)")];
+  const restSelected=localStorage.getItem(stateKey("restday"))==="1";
+  const trailSelected=localStorage.getItem(stateKey("trailwalk"))==="1";
+  let ready=false;
+
+  if(day==="sunday"){
+    ready=restSelected || trailSelected;
+  }else if(day==="thursday"){
+    // Thursday is complete once Rest Day is explicitly selected. Mobility remains optional.
+    ready=restSelected;
+  }else{
+    ready=boxes.length>0 && boxes.every(b=>b.checked);
+  }
+
+  btn.disabled=!ready;
+  btn.setAttribute("aria-disabled",ready?"false":"true");
+  btn.title=ready ? "All completion requirements are met." : "Complete the required items first.";
+}
+
 function updateProgress(){
   const boxes=[...document.querySelectorAll("#sessionList .check:not(:disabled)")];
   const done=boxes.filter(b=>b.checked).length;
@@ -331,14 +352,17 @@ function updateProgress(){
     if(restSelected) document.getElementById("progress").textContent="Rest day selected • Sunday complete";
     else if(trailSelected) document.getElementById("progress").textContent="Trail option completed • Sunday complete";
     else document.getElementById("progress").textContent="Choose Trail Walk or Rest Day";
+    updateCompleteButton();
     return;
   }
   if(day==="thursday" && restSelected){
     const optionalDone=boxes.filter(b=>b.checked && b.closest(".exercise").dataset.id!=="restday").length;
     document.getElementById("progress").textContent="Rest day selected • Optional mobility: "+optionalDone+" of 5 completed";
+    updateCompleteButton();
     return;
   }
   document.getElementById("progress").textContent=done+" of "+boxes.length+" session items completed";
+  updateCompleteButton();
 }
 weekSel.onchange=()=>{week=weekSel.value;localStorage.setItem("at-week",week);renderSession()}
 daySel.onchange=()=>{day=daySel.value;localStorage.setItem("at-day",day);renderSession()}
@@ -353,28 +377,10 @@ document.getElementById("reset").onclick=()=>{
   renderSession();
 };
 document.getElementById("complete").onclick=()=>{
-  if(day==="sunday"){
-    const restSelected=localStorage.getItem(stateKey("restday"))==="1";
-    const trailSelected=localStorage.getItem(stateKey("trailwalk"))==="1";
-    if(!restSelected && !trailSelected){
-      alert("Choose either Trail Walk or Rest Day, then check that option.");
-    }
-    updateProgress();
-    return;
-  }
-  if(day==="thursday"){
-    // Completing a recovery day records Rest Day; mobility remains optional.
-    localStorage.setItem(stateKey("restday"),"1");
-    saveCloud("restday",true);
-    const restCard=document.querySelector('.exercise[data-id="restday"]');
-    if(restCard){restCard.querySelector(".check").checked=true;restCard.classList.add("done");}
-    updateProgress();
-    return;
-  }
-  document.querySelectorAll("#sessionList .check:not(:disabled)").forEach(b=>{
-    b.checked=true;const a=b.closest(".exercise");localStorage.setItem(stateKey(a.dataset.id),"1");saveCloud(a.dataset.id,true);a.classList.add("done");
-  });
-  updateProgress();
+  const btn=document.getElementById("complete");
+  if(btn.disabled) return;
+  btn.textContent="Session Complete ✓";
+  setTimeout(()=>{btn.textContent="Mark Session Complete";},1800);
 };
 renderSession();
 setCloudStatus(cloudStatus);
