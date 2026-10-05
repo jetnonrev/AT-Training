@@ -61,7 +61,7 @@ details{border-top:1px solid #edf0f2}summary{cursor:pointer;padding:11px 13px;fo
 
 <div class="status">
   <div class="status-title" id="sessionTitle"></div>
-  <div class="status-sub" id="progress"></div>
+  <div class="status-sub" id="progress"></div><div class="status-sub" id="cloudStatus" style="margin-top:4px">Connecting to Google Sheets…</div>
 </div>
 
 <div class="tabs">
@@ -159,6 +159,10 @@ sunday:{title:"Sunday — Trail or Rest",note:"Choose one: complete the Trail Wa
 
 const trailTargets={1:"4 walks • 3 laps each • 0.6 mile per walk",2:"4 walks • 4–5 laps each • 0.8–1.0 mile per walk",3:"4 walks • 5–6 laps each • 1.0–1.2 miles per walk",4:"4 walks • 6–8 laps each • 1.2–1.6 miles per walk"};
 
+const CLOUD_URL="https://script.google.com/macros/s/AKfycbxgPXj59Pn_8BWbGyxTX8EL_z4bDMauBgx3OOYCh7pSTI8mdfiBGizl4CLnbGAT6T-A/exec";
+let cloudLoaded=false;
+let cloudStatus="Connecting to Google Sheets…";
+
 let week=localStorage.getItem("at-week")||"1";
 let day=localStorage.getItem("at-day");
 const jsDay=["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][new Date().getDay()];
@@ -167,6 +171,79 @@ const weekSel=document.getElementById("week"),daySel=document.getElementById("da
 weekSel.value=week; daySel.value=day;
 
 function stateKey(id){return "at-v2-w"+week+"-"+day+"-"+id}
+
+function setCloudStatus(msg){
+  cloudStatus=msg;
+  const el=document.getElementById("cloudStatus");
+  if(el) el.textContent=msg;
+}
+
+function saveCloud(id,completed){
+  const params=new URLSearchParams();
+  params.set("key",stateKey(id));
+  params.set("week",week);
+  params.set("day",day);
+  params.set("item",id);
+  params.set("completed",completed ? "true" : "false");
+  fetch(CLOUD_URL,{
+    method:"POST",
+    mode:"no-cors",
+    headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},
+    body:params.toString(),
+    cache:"no-store",
+    keepalive:true
+  }).then(()=>setCloudStatus("Synced with Google Sheets"))
+    .catch(()=>setCloudStatus("Saved on this device • cloud sync pending"));
+}
+
+function loadCloud(){
+  setCloudStatus("Connecting to Google Sheets…");
+  const cb="atCloudCallback_"+Date.now();
+  const script=document.createElement("script");
+  const timer=setTimeout(()=>{
+    if(window[cb]) delete window[cb];
+    script.remove();
+    setCloudStatus("Saved on this device • cloud sync unavailable");
+  },12000);
+
+  window[cb]=payload=>{
+    clearTimeout(timer);
+    try{
+      const data=(payload&&payload.data)||{};
+      Object.keys(data).forEach(k=>{
+        if(!k.startsWith("at-v2-w")) return;
+        if(data[k].completed) localStorage.setItem(k,"1");
+        else localStorage.removeItem(k);
+      });
+
+      // Seed any locally completed items that are not yet in the Sheet.
+      Object.keys(localStorage).forEach(k=>{
+        if(!k.startsWith("at-v2-w") || localStorage.getItem(k)!=="1" || data[k]) return;
+        const m=k.match(/^at-v2-w([1-4])-(monday|tuesday|wednesday|thursday|friday|saturday|sunday)-(.+)$/);
+        if(!m) return;
+        const params=new URLSearchParams({key:k,week:m[1],day:m[2],item:m[3],completed:"true"});
+        fetch(CLOUD_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},body:params.toString(),keepalive:true}).catch(()=>{});
+      });
+
+      cloudLoaded=true;
+      setCloudStatus("Synced with Google Sheets");
+      renderSession();
+    }catch(e){
+      setCloudStatus("Saved on this device • cloud sync unavailable");
+    }finally{
+      delete window[cb];
+      script.remove();
+    }
+  };
+  script.onerror=()=>{
+    clearTimeout(timer);
+    delete window[cb];
+    script.remove();
+    setCloudStatus("Saved on this device • cloud sync unavailable");
+  };
+  script.src=CLOUD_URL+"?callback="+encodeURIComponent(cb)+"&t="+Date.now();
+  document.head.appendChild(script);
+}
 function card(id){
   const x=X[id],done=localStorage.getItem(stateKey(id))==="1";
   const disabled=id==="stepup"&&week==="1";
@@ -198,12 +275,14 @@ function bindChecks(){
     b.onchange=()=>{
       const a=b.closest(".exercise"),id=a.dataset.id,k=stateKey(id);
       if(b.checked)localStorage.setItem(k,"1");else localStorage.removeItem(k);
+      saveCloud(id,b.checked);
       a.classList.toggle("done",b.checked);
 
       // Sunday is Trail OR Rest. Selecting one clears the other.
       if(day==="sunday" && b.checked && (id==="trailwalk" || id==="restday")){
         const other=id==="trailwalk"?"restday":"trailwalk";
         localStorage.removeItem(stateKey(other));
+        saveCloud(other,false);
         const otherCard=document.querySelector('.exercise[data-id="'+other+'"]');
         if(otherCard){
           const otherBox=otherCard.querySelector(".check");
@@ -243,7 +322,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
 });
 document.getElementById("reset").onclick=()=>{
   if(!confirm("Reset all checkmarks for Week "+week+" — "+sessions[day].title+"?"))return;
-  sessions[day].items.forEach(id=>localStorage.removeItem(stateKey(id)));
+  sessions[day].items.forEach(id=>{localStorage.removeItem(stateKey(id));saveCloud(id,false);});
   renderSession();
 };
 document.getElementById("complete").onclick=()=>{
@@ -259,17 +338,20 @@ document.getElementById("complete").onclick=()=>{
   if(day==="thursday"){
     // Completing a recovery day records Rest Day; mobility remains optional.
     localStorage.setItem(stateKey("restday"),"1");
+    saveCloud("restday",true);
     const restCard=document.querySelector('.exercise[data-id="restday"]');
     if(restCard){restCard.querySelector(".check").checked=true;restCard.classList.add("done");}
     updateProgress();
     return;
   }
   document.querySelectorAll("#sessionList .check:not(:disabled)").forEach(b=>{
-    b.checked=true;const a=b.closest(".exercise");localStorage.setItem(stateKey(a.dataset.id),"1");a.classList.add("done");
+    b.checked=true;const a=b.closest(".exercise");localStorage.setItem(stateKey(a.dataset.id),"1");saveCloud(a.dataset.id,true);a.classList.add("done");
   });
   updateProgress();
 };
 renderSession();
+setCloudStatus(cloudStatus);
+loadCloud();
 if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
 </script>
 </body>
