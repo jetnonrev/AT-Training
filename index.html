@@ -179,21 +179,44 @@ function setCloudStatus(msg){
 }
 
 function saveCloud(id,completed){
-  const params=new URLSearchParams();
-  params.set("key",stateKey(id));
-  params.set("week",week);
-  params.set("day",day);
-  params.set("item",id);
-  params.set("completed",completed ? "true" : "false");
-  fetch(CLOUD_URL,{
-    method:"POST",
-    mode:"no-cors",
-    headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},
-    body:params.toString(),
-    cache:"no-store",
-    keepalive:true
-  }).then(()=>setCloudStatus("Synced with Google Sheets"))
-    .catch(()=>setCloudStatus("Saved on this device • cloud sync pending"));
+  setCloudStatus("Saving to Google Sheets…");
+  const cb="atCloudSave_"+Date.now()+"_"+Math.floor(Math.random()*100000);
+  const script=document.createElement("script");
+  const timer=setTimeout(()=>{
+    if(window[cb]) delete window[cb];
+    script.remove();
+    setCloudStatus("Saved on this device • cloud save not confirmed");
+  },12000);
+
+  window[cb]=payload=>{
+    clearTimeout(timer);
+    if(payload && payload.ok){
+      setCloudStatus("Synced with Google Sheets");
+    }else{
+      setCloudStatus("Saved on this device • Google Sheets returned an error");
+    }
+    delete window[cb];
+    script.remove();
+  };
+  script.onerror=()=>{
+    clearTimeout(timer);
+    delete window[cb];
+    script.remove();
+    setCloudStatus("Saved on this device • cloud save failed");
+  };
+
+  const params=new URLSearchParams({
+    action:"save",
+    callback:cb,
+    key:stateKey(id),
+    week:week,
+    day:day,
+    item:id,
+    completed:completed ? "true" : "false",
+    t:String(Date.now())
+  });
+  script.src=CLOUD_URL+"?"+params.toString();
+  document.head.appendChild(script);
 }
 
 function loadCloud(){
@@ -221,8 +244,12 @@ function loadCloud(){
         if(!k.startsWith("at-v2-w") || localStorage.getItem(k)!=="1" || data[k]) return;
         const m=k.match(/^at-v2-w([1-4])-(monday|tuesday|wednesday|thursday|friday|saturday|sunday)-(.+)$/);
         if(!m) return;
-        const params=new URLSearchParams({key:k,week:m[1],day:m[2],item:m[3],completed:"true"});
-        fetch(CLOUD_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},body:params.toString(),keepalive:true}).catch(()=>{});
+        const cb2="atCloudSeed_"+Date.now()+"_"+Math.floor(Math.random()*100000);
+        const s2=document.createElement("script");
+        window[cb2]=()=>{delete window[cb2];s2.remove();};
+        const params=new URLSearchParams({action:"save",callback:cb2,key:k,week:m[1],day:m[2],item:m[3],completed:"true",t:String(Date.now())});
+        s2.src=CLOUD_URL+"?"+params.toString();
+        document.head.appendChild(s2);
       });
 
       cloudLoaded=true;
@@ -241,7 +268,7 @@ function loadCloud(){
     script.remove();
     setCloudStatus("Saved on this device • cloud sync unavailable");
   };
-  script.src=CLOUD_URL+"?callback="+encodeURIComponent(cb)+"&t="+Date.now();
+  script.src=CLOUD_URL+"?action=load&callback="+encodeURIComponent(cb)+"&t="+Date.now();
   document.head.appendChild(script);
 }
 function card(id){
