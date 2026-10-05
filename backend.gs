@@ -5,8 +5,17 @@ function sheet_() {
   return SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_NAME);
 }
 
-function doGet(e) {
-  const callback = (e && e.parameter && e.parameter.callback) || '';
+function jsonp_(callback, obj) {
+  const body = JSON.stringify(obj);
+  if (callback) {
+    return ContentService.createTextOutput(callback + '(' + body + ');')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(body)
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function loadData_() {
   const rows = sheet_().getDataRange().getValues();
   const data = {};
   for (let i = 1; i < rows.length; i++) {
@@ -20,41 +29,61 @@ function doGet(e) {
       updatedAt: rows[i][5] instanceof Date ? rows[i][5].toISOString() : String(rows[i][5] || '')
     };
   }
-  const body = JSON.stringify({ok:true,data:data});
-  if (callback) {
-    return ContentService.createTextOutput(callback + '(' + body + ');')
-      .setMimeType(ContentService.MimeType.JAVASCRIPT);
-  }
-  return ContentService.createTextOutput(body)
-    .setMimeType(ContentService.MimeType.JSON);
+  return data;
 }
 
-function doPost(e) {
-  const p = (e && e.parameter) || {};
+function saveRecord_(p) {
   const key = String(p.key || '').trim();
-  if (!key) return ContentService.createTextOutput('missing key');
+  if (!key) throw new Error('missing key');
 
   const week = String(p.week || '');
   const day = String(p.day || '');
   const item = String(p.item || '');
   const completed = String(p.completed || '').toLowerCase() === 'true';
 
-  const sh = sheet_();
-  const values = sh.getDataRange().getValues();
-  let row = 0;
-  for (let i = 1; i < values.length; i++) {
-    if (String(values[i][0] || '') === key) {
-      row = i + 1;
-      break;
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sh = sheet_();
+    const values = sh.getDataRange().getValues();
+    let row = 0;
+    for (let i = 1; i < values.length; i++) {
+      if (String(values[i][0] || '') === key) {
+        row = i + 1;
+        break;
+      }
     }
+    const payload = [[key, week, day, item, completed, new Date()]];
+    if (row) sh.getRange(row, 1, 1, 6).setValues(payload);
+    else sh.appendRow(payload[0]);
+  } finally {
+    lock.releaseLock();
   }
+  return {ok:true,key:key,completed:completed};
+}
 
-  const payload = [[key, week, day, item, completed, new Date()]];
-  if (row) {
-    sh.getRange(row, 1, 1, 6).setValues(payload);
-  } else {
-    sh.appendRow(payload[0]);
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  const callback = String(p.callback || '');
+  const action = String(p.action || 'load');
+
+  try {
+    if (action === 'save') {
+      return jsonp_(callback, saveRecord_(p));
+    }
+    return jsonp_(callback, {ok:true,data:loadData_()});
+  } catch (err) {
+    return jsonp_(callback, {ok:false,error:String(err && err.message ? err.message : err)});
   }
+}
 
-  return ContentService.createTextOutput('ok');
+function doPost(e) {
+  const p = (e && e.parameter) || {};
+  try {
+    return ContentService.createTextOutput(JSON.stringify(saveRecord_(p)))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ok:false,error:String(err && err.message ? err.message : err)}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
