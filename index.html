@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17324D">
+<title>AT Training</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<style>
+:root{--navy:#17324D;--green:#4F6F52;--bg:#F4F6F7;--card:#fff;--text:#24313A;--muted:#6B7780;--border:#D5D9DC;--blue:#185FA5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;padding-bottom:85px}
+header{position:sticky;top:0;z-index:10;background:var(--navy);color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px}
+header h1{margin:0 0 3px;font-size:22px}header p{margin:0;font-size:12px;opacity:.85}.wrap{max-width:760px;margin:auto;padding:14px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.card,.exercise,.callout{background:#fff;border:1px solid var(--border);border-radius:14px;padding:13px;margin:10px 0;box-shadow:0 4px 18px rgba(23,50,77,.07)}
+label{display:block;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:5px}select{width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;font-size:16px;background:#fff}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:12px 0}.tab{border:1px solid var(--border);background:#fff;color:var(--navy);padding:11px 4px;border-radius:11px;font-weight:800}.tab.active{background:var(--navy);color:#fff}
+.section{display:none}.section.active{display:block}h2{color:var(--navy);font-size:19px}.sub{color:var(--green);font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin:17px 2px 8px}
+.exercise{padding:0;overflow:hidden}.head{display:flex;gap:10px;align-items:flex-start;padding:13px}.check{width:26px;height:26px;accent-color:var(--green)}.name{font-weight:800;color:var(--navy);font-size:17px}.dose{font-weight:800;color:var(--green);font-size:14px;margin-top:3px}
+details{border-top:1px solid #edf0f2}summary{cursor:pointer;padding:11px 13px;font-weight:800;color:var(--navy)}.body{padding:0 13px 13px;font-size:14px;line-height:1.45}.body p{margin:7px 0}
+.video{display:block;background:var(--blue);color:#fff;text-decoration:none;text-align:center;padding:12px;border-radius:10px;font-weight:900;margin-top:10px}
+.callout{font-size:13px;line-height:1.45;background:#F5F1E7}.danger{background:#f7ecec}.mini{font-size:13px;line-height:1.4}.mini h3{margin:0 0 5px;color:var(--navy)}
+.bottom{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);border-top:1px solid var(--border);padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bottom button{border:0;border-radius:10px;padding:11px;font-weight:900}.reset{background:#e9edef;color:var(--navy)}.complete{background:var(--green);color:#fff}
+.done{opacity:.65}@media(max-width:520px){.grid{grid-template-columns:1fr}.tabs{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header><h1>AT Training</h1><p>Weeks 1–4 Foundation • Moab 3 non-waterproof • No pack</p></header>
+<main class="wrap">
+<div class="grid">
+<div class="card"><label for="week">Training Week</label><select id="week"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
+<div class="card"><label>Today</label><div id="today" style="font-size:17px;font-weight:800;color:var(--navy)"></div><div id="progress" style="font-size:12px;color:var(--muted)"></div></div>
+</div>
+<div class="tabs">
+<button class="tab active" data-tab="workout">Workout</button><button class="tab" data-tab="balance">Balance</button><button class="tab" data-tab="trail">Trail</button><button class="tab" data-tab="recovery">Recovery</button>
+</div>
+<section id="workout" class="section active"><h2>Strength + Ankle + Hip + Core</h2><div class="callout">Use this on your two strength days. Hip/ankle work is prescribed 3 days/week; on the additional ankle/hip day do those sections without repeating the full strength block.</div><div id="workoutList"></div></section>
+<section id="balance" class="section"><h2>Balance Work</h2><div id="balanceList"></div></section>
+<section id="trail" class="section"><h2>Trail Walk</h2><div class="callout" id="trailDose"></div><div class="grid">
+<div class="card mini"><h3>Before You Start</h3>Warm up 3–5 minutes. First lap easy. Talk-test pace. No backpack during Weeks 1–4.</div>
+<div class="card mini"><h3>Uphill</h3>Shorten steps as grade increases. Slight lean from the ankles, not the waist. Maintain effort rather than speed.</div>
+<div class="card mini"><h3>Downhill</h3>Short controlled steps, soft knees, look 2–4 steps ahead. Slow immediately if the right ankle feels uncertain.</div>
+<div class="card mini"><h3>Footwear</h3>Merrell Moab 3 non-waterproof. Track hot spots, toe pressure, heel/arch pain, ankle stability, and wet-shoe behavior.</div>
+</div></section>
+<section id="recovery" class="section"><h2>Mobility + Recovery</h2><div class="grid">
+<div class="card mini"><h3>Calf Stretch</h3>20–30 sec × 2/side.</div><div class="card mini"><h3>Soleus / Ankle</h3>20–30 sec × 2/side with back knee slightly bent.</div>
+<div class="card mini"><h3>Hamstring</h3>20–30 sec × 2/side; hinge from hips.</div><div class="card mini"><h3>Hip Flexor</h3>20–30 sec × 2/side; gentle pelvic tuck.</div>
+<div class="card mini"><h3>Ankle Circles</h3>5 slow circles each direction per foot.</div><div class="card mini"><h3>Session Order</h3>Warm up → ankle bands → hip activation → balance → strength/core → mobility.</div>
+</div><div class="callout danger"><b>Pain rules:</b> 0–2/10 is generally acceptable if movement remains normal and symptoms return to baseline by the next morning. At 3/10 reduce volume/range/resistance. Stop for 4+/10, sharp pain, swelling, limp, or ankle giving-way.</div></section>
+</main>
+<div class="bottom"><button class="reset" id="reset">Reset Checkmarks</button><button class="complete" id="complete">Mark Section Complete</button></div>
+<script>
+const E=[
+["Ankle","Dorsiflexion",["2 × 12","2 × 12","2 × 12","2 × 12"],"Sit with the working leg supported. Anchor the band in front at ankle height and loop it over the forefoot.","Pull the top of the foot toward the shin, pause, and return slowly.","Keep heel and knee still; do not rotate the leg.","https://www.youtube.com/watch?v=5YUh4lOQ2pI"],
+["Ankle","Plantarflexion",["2 × 12","2 × 12","2 × 12","2 × 12"],"Sit with leg extended. Loop band around the ball of the foot.","Press the foot away like a gas pedal, then return slowly.","Keep knee quiet; do not curl the toes.","https://www.youtube.com/watch?v=g-iXYapbuqk"],
+["Ankle","Inversion",["2 × 12 each • RIGHT 3 × 12","2 × 12 each • RIGHT 3 × 12","2 × 12 each • RIGHT 3 × 12","2 × 12 each • RIGHT 3 × 12"],"Anchor the band to the outside of the working foot.","Turn the sole inward slowly, then return to neutral.","Move from the ankle; do not twist the knee or hip.","https://www.youtube.com/watch?v=50YDq8_OA_w"],
+["Ankle","Eversion",["2 × 12 each • RIGHT 3 × 12","2 × 12 each • RIGHT 3 × 12","2 × 12 each • RIGHT 3 × 12","2 × 12 each • RIGHT 3 × 12"],"Anchor the band to the inside of the working foot.","Turn the sole outward, pause, then return slowly.","Keep the knee still; no jerking.","https://www.youtube.com/watch?v=g-iXYapbuqk"],
+["Hip","Glute Bridge",["2 × 8","2 × 10","2 × 12","2 × 12"],"Lie on your back with knees bent and feet hip-width.","Brace lightly, squeeze glutes, lift hips, pause, lower slowly.","Keep ribs down; shorten range if lateral-hip pain increases.","https://www.youtube.com/watch?v=PhTDzR0TpZs"],
+["Hip","Standing Hip Abduction",["2 × 8 / side","2 × 10 / side","2 × 10 / side","2 × 10 / side"],"Hold a counter; stand tall with toes forward.","Move one leg 6–10 inches to the side without leaning; return slowly.","Keep pelvis level. Light band only from Week 3 if comfortable.","https://www.youtube.com/watch?v=qBqKuEQl9sI"],
+["Hip","Standing Hip Extension",["2 × 8 / side","2 × 10 / side","2 × 10 / side","2 × 10 / side"],"Hold a counter. Keep trunk tall and knees soft.","Move one leg backward about 6–10 inches, then return slowly.","Do not arch the low back or swing the leg.","https://www.youtube.com/watch?v=i4rmRxPBmkY"],
+["Hip","Sit-to-Stand — Hip Emphasis",["2 × 8","2 × 10","2 × 10","2 × 10–12"],"Use a firm chair. Feet hip-width and slightly behind knees.","Hinge forward, stand through the whole foot, then sit slowly.","Keep knees tracking over feet.","https://www.youtube.com/watch?v=qveKmiXEkIQ"],
+["Hip","Hip Flexor Stretch",["2 × 20–30 sec / side","2 × 20–30 sec / side","2 × 20–30 sec / side","2 × 20–30 sec / side"],"Use a split stance with support nearby.","Gently tuck pelvis and shift forward.","Do not push into lateral-hip pain.","https://www.youtube.com/watch?v=rrnKzcTems4"],
+["Strength","Sit-to-Stand",["2 × 8","2 × 10","2 × 10","2 × 10–12"],"Firm chair; feet hip-width and slightly behind knees.","Hinge forward, stand, then sit slowly over 2–3 sec.","Do not drop into chair or let knees collapse inward.","https://www.youtube.com/watch?v=qveKmiXEkIQ"],
+["Strength","Glute Bridge",["2 × 8–10","2 × 10","2 × 12","2 × 12"],"Same setup as the hip routine.","Lift with glutes, pause, lower slowly.","Count only once on combined hip/strength days.","https://www.youtube.com/watch?v=PhTDzR0TpZs"],
+["Strength","Bird Dog",["2 × 6 / side","2 × 6 / side","2 × 8 / side","2 × 8 / side"],"Hands under shoulders; knees under hips.","Extend opposite arm and leg, pause, return slowly.","Do not rotate hips or arch low back.","https://www.youtube.com/watch?v=xEDnlOxeJH4"],
+["Strength","Double-Leg Calf Raise",["2 × 10","2 × 12","2 × 12","2 × 12"],"Hold a wall or chair lightly; feet parallel.","Rise onto balls of feet, pause, lower over 2–3 sec.","Do not bounce or let ankles roll.","https://www.youtube.com/watch?v=FRw-Oe7wcSY"],
+["Strength","Tibialis / Toe Raise",["2 × 10","2 × 12","2 × 12","2 × 12"],"Stand with back near a wall; heels planted.","Lift toes and forefeet toward shins, pause, lower.","Avoid leaning back or bouncing.","https://www.youtube.com/watch?v=enJ6yYJerVw"],
+["Strength","Low Step-Up",["Starts Week 2","2 × 6 / leg","2 × 8 / leg","2 × 8 / leg"],"Use a stable 4–6 inch step; whole foot on step.","Stand through working leg, then step down slowly.","Avoid knee collapse, hip drop, or pushing hard from trailing leg.","https://www.youtube.com/watch?v=RnEeuy0e2HQ&t=333s"],
+["Core + Back","Bird Dog",["2 × 6 / side","2 × 6 / side","2 × 8 / side","2 × 8 / side"],"Hands under shoulders; knees under hips.","Extend opposite arm and leg while keeping pelvis square.","If already completed in strength block, do not duplicate it.","https://www.youtube.com/watch?v=xEDnlOxeJH4"],
+["Core + Back","Dead Bug",["2 × 5 / side","2 × 5 / side","2 × 6–8 / side","2 × 6–8 / side"],"Lie on back with hips and knees around 90°; arms up.","Lower opposite arm and leg only as far as trunk stays controlled.","Do not let low back arch away from floor.","https://www.youtube.com/watch?v=GbSC02oU3To"],
+["Core + Back","Side Plank from Knees",["2 × 10–15 sec / side","2 × 15–20 sec / side","2 × 20–25 sec / side","2 × 20–25 sec / side"],"Lie on side with knees bent; elbow under shoulder.","Lift hips so shoulder, hip, and knee form a straight line.","Shorten hold if lateral-hip pain increases.","https://www.youtube.com/watch?v=igs_hXbcNHE"]
+];
+const B=[
+["Balance","Single-Leg Balance",["3 × 20 sec / side","3 × 25–30 sec / side","3 × 30 sec / side","3 × 30 sec / side"],"Stand beside a counter or sturdy chair. Shift onto one foot.","Hold with standing knee soft, hips level, eyes forward.","Use fingertip support as needed. Small ankle corrections are good.","https://www.youtube.com/watch?v=6sF64xrDvRM"],
+["Balance","Tandem Stance",["2 × 30 sec","2 × 30 sec","2 × 30 sec + slow head turns","2 × 30 sec + slow head turns"],"Stand at a counter with one foot directly in front of the other.","Hold without leaning; switch which foot leads.","From Week 3 add 3–4 slow head turns only if steady.","https://www.youtube.com/watch?v=GS3-m0a9RRk"]
+];
+const trail={1:"4 walks • 3 laps each • 0.6 mile per walk",2:"4 walks • 4–5 laps each • 0.8–1.0 mile per walk",3:"4 walks • 5–6 laps each • 1.0–1.2 miles per walk",4:"4 walks • 6–8 laps each • 1.2–1.6 miles per walk"};
+let week=localStorage.getItem("at-week")||"1";const sel=document.getElementById("week");sel.value=week;
+function key(n){return "at-w"+week+"-"+n.replace(/[^a-z0-9]/gi,"-").toLowerCase()}
+function card(x,i){const k=key(x[1]+"-"+i),done=localStorage.getItem(k)==="1",disabled=x[1]==="Low Step-Up"&&week==="1";return '<article class="exercise '+(done?'done':'')+'" data-k="'+k+'"><div class="head"><input class="check" type="checkbox" '+(done?'checked':'')+' '+(disabled?'disabled':'')+'><div><div class="name">'+x[1]+'</div><div class="dose">'+x[2][week-1]+'</div></div></div><details><summary>Instructions + video</summary><div class="body"><p><b>Setup:</b> '+x[3]+'</p><p><b>Movement:</b> '+x[4]+'</p><p><b>Cues:</b> '+x[5]+'</p><a class="video" target="_blank" rel="noopener" href="'+x[6]+'">▶ Watch technique video</a></div></details></article>'}
+function renderList(arr,target){let last="",out="";arr.forEach((x,i)=>{if(x[0]!==last){last=x[0];out+='<h3 class="sub">'+last+'</h3>'}out+=card(x,i)});document.getElementById(target).innerHTML=out}
+function progress(){const boxes=[...document.querySelectorAll(".section.active .check:not(:disabled)")];document.getElementById("progress").textContent=boxes.filter(b=>b.checked).length+" of "+boxes.length+" exercises completed"}
+function bind(){document.querySelectorAll(".check").forEach(b=>b.onchange=()=>{const a=b.closest(".exercise");localStorage.setItem(a.dataset.k,b.checked?"1":"0");a.classList.toggle("done",b.checked);progress()})}
+function render(){renderList(E,"workoutList");renderList(B,"balanceList");document.getElementById("trailDose").innerHTML="<b>Week "+week+" trail target:</b> "+trail[week]+"<br><span style='color:#6B7780'>Talk-test pace. Finish with reserve.</span>";bind();progress()}
+sel.onchange=()=>{week=sel.value;localStorage.setItem("at-week",week);render()}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));t.classList.add("active");document.getElementById(t.dataset.tab).classList.add("active");progress()});
+document.getElementById("reset").onclick=()=>{if(!confirm("Reset all Week "+week+" checkmarks?"))return;Object.keys(localStorage).filter(k=>k.startsWith("at-w"+week+"-")).forEach(k=>localStorage.removeItem(k));render()}
+document.getElementById("complete").onclick=()=>{document.querySelectorAll(".section.active .check:not(:disabled)").forEach(b=>{b.checked=true;const a=b.closest(".exercise");localStorage.setItem(a.dataset.k,"1");a.classList.add("done")});progress()}
+document.getElementById("today").textContent=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date().getDay()];
+render();if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+</script>
+</body></html>
